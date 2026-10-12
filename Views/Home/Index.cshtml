@@ -1,0 +1,41 @@
+@{
+    ViewData["Title"] = "Laboratorio EF";
+    var ciudades = ViewBag.Ciudades as List<EnlacePrueba> ?? new();
+    var cuarteles = ViewBag.Cuarteles as List<EnlacePrueba> ?? new();
+}
+
+@if (ViewBag.Error != null)
+{
+    <div class="card error">
+        <strong>No se pudo leer la base:</strong> @ViewBag.Error<br />
+        Revisa la cadena <code>HeroesClase1</code> en appsettings.json y que los scripts de la carpeta Sql se ejecutaron.
+    </div>
+}
+
+<div class="card">
+    <h3>Prueba A — Ciudad con villanos</h3>
+    <ul>
+        @foreach (var c in ciudades)
+        {
+            <li><a href="/LaboratorioEf/Ciudad/@c.Id">/LaboratorioEf/Ciudad/@c.Id</a> — @c.Nombre</li>
+        }
+    </ul>
+</div>
+
+<div class="card">
+    <h3>Prueba B — Metadatos del modelo</h3>
+    <ul>
+        <li><a href="/LaboratorioEf/ModeloVillano">/LaboratorioEf/ModeloVillano</a></li>
+        <li><a href="/LaboratorioEf/ModeloVehiculo">/LaboratorioEf/ModeloVehiculo</a> (extra)</li>
+    </ul>
+</div>
+
+<div class="card">
+    <h3>Ejercicio — Cuartel con vehículos</h3>
+    <ul>
+        @foreach (var c in cuarteles)
+        {
+            <li><a href="/LaboratorioEf/Cuartel/@c.Id">/LaboratorioEf/Cuartel/@c.Id</a> — @c.Nombre</li>
+        }
+    </ul>
+</div>

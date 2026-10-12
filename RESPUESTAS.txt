@@ -1,0 +1,41 @@
+CLASE 02 – RESPUESTAS
+Estudiante: Cristhian Arispe Vargas — Programación Web III
+Repositorio GitHub: https://github.com/Cristhian123987/HeroesMvc
+
+
+Parte 1: Ciudad y Villano
+-------------------------
+
+1. ¿Qué ventaja tiene poner la configuración en clases IEntityTypeConfiguration en vez de escribirla en OnModelCreating?
+Cada entidad tiene su propio archivo, así que OnModelCreating queda corto y legible. La configuración de una entidad se encuentra, revisa y modifica en un solo lugar, sin tocar el mapeo de las demás. Además reduce conflictos cuando varias personas trabajan en el mismo contexto, y permite activar o desactivar una configuración comentando una sola línea (como en la prueba C).
+
+2. ¿Qué diferencia hay entre ApplyConfiguration y ApplyConfigurationsFromAssembly?
+ApplyConfiguration(new XConfiguration()) registra una configuración concreta, de forma explícita: se ve qué se aplica y en qué orden. ApplyConfigurationsFromAssembly(...) busca por reflexión todas las clases que implementan IEntityTypeConfiguration<T> en el ensamblado y las aplica todas en una sola línea; es más cómodo, pero menos visible y no permite comentar una sola configuración tan fácilmente.
+
+3. ¿Por qué falló la consulta al comentar VillanoConfiguration?
+Sin esa configuración, EF usa sus convenciones: la propiedad NivelAmenaza se mapea a una columna llamada NivelAmenaza. En la base la columna se llama Nivel_Amenaza, así que el SELECT generado falla con Invalid column name 'NivelAmenaza'. También se pierden la longitud 100 de Alias, la precisión (10,2) de Recompensa y el GETDATE() de FechaRegistro.
+
+4. Si HasCheckConstraint no crea la restricción en esta práctica, ¿qué la impone?
+La impone SQL Server: el CHECK (Nivel_Amenaza BETWEEN 1 AND 5) fue creado por el script SQL. En EF, HasCheckConstraint solo describe esa restricción en el modelo para que coincida con la base (y la crearía solo si se usaran migraciones).
+
+5. ¿Por qué la relación se configura solo en VillanoConfiguration?
+Una relación es una sola cosa y debe configurarse una sola vez, desde el dependiente (Villano), que es quien tiene la FK CiudadId. Configurarla también desde Ciudad duplica el mapeo y, si las navegaciones no coinciden, EF puede crear una segunda relación con una FK extra (CiudadId1).
+
+6. ¿Qué pasa al intentar borrar una ciudad con villanos, y por qué?
+SQL Server rechaza el DELETE con un error de conflicto con la restricción FK_Villanos_Ciudades. La FK es obligatoria y está definida con ON DELETE NO ACTION (en EF, DeleteBehavior.NoAction), así que no se puede borrar el principal mientras tenga dependientes que lo referencian.
+
+
+Parte 2: Ejercicio Cuarteles y Vehículos
+----------------------------------------
+
+1. ¿Por qué CuartelId es int? y Villano.CiudadId es int?
+Porque un vehículo puede estar en un cuartel o en ninguno (la columna admite NULL y además SetNull necesita poder dejarla en NULL), mientras que todo villano debe operar en exactamente una ciudad (FK obligatoria, NOT NULL). La nulabilidad del tipo C# le dice a EF si la relación es opcional u obligatoria.
+
+2. ¿Qué diferencia hay entre SetNull y NoAction al borrar el principal?
+Con SetNull, al borrar el cuartel la base pone CuartelId = NULL en sus vehículos y el borrado se permite. Con NoAction, la base no hace nada con los dependientes y, como la FK seguiría apuntando a un registro inexistente, rechaza el borrado del principal mientras tenga dependientes.
+
+3. ¿Por qué el CHECK de capacidad va en CuartelConfiguration y no en VehiculoConfiguration?
+Porque la columna Capacidad pertenece a la tabla Cuarteles. Un CHECK es una restricción de la tabla donde está la columna, así que se describe en la configuración de esa entidad (ToTable("Cuarteles", ..., t => t.HasCheckConstraint(...))).
+
+4. ¿Por qué la prueba de comentar la configuración falla con Placa y no con Modelo?
+Porque Modelo se llama igual en C# y en la base, así que la convención de EF lo encuentra igual. Placa en cambio está en la columna Nro_Placa; sin HasColumnName("Nro_Placa") EF busca una columna Placa que no existe y falla con Invalid column name 'Placa'.
